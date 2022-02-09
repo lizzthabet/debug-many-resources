@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: a
+spec:
+  selector:
+    matchLabels:
+      app: a
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: a
+    spec:
+      containers:
+        - name: a
+          image: nginx
+          resources:
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              port: 80
+            failureThreshold: 1
+            periodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: b
+spec:
+  selector:
+    matchLabels:
+      app: b
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: b
+    spec:
+      containers:
+        - name: b
+          image: nginx
+          resources:
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              port: 80
+            failureThreshold: 1
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: c
+data:
+  foo: baz
