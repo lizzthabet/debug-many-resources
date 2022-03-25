@@ -1,17 +1,34 @@
 load('ext://uibutton', 'cmd_button', 'location', 'text_input')
 
 k8s_yaml('a-b.yml')
-k8s_resource('a', new_name='frontend-combo', port_forwards='6363:80', objects=['c'])
-k8s_resource('b', new_name='database')
+
+k8s_resource(
+  'a',
+  new_name='frontend-combo',
+  port_forwards='6363:80',
+  objects=['c'],
+  labels="frontend"
+)
+
+k8s_resource(
+  'b',
+  new_name='database',
+  labels=["backend", "storage"]
+)
 
 k8s_yaml('d.yml')
-k8s_resource('d', new_name='backend', resource_deps=['frontend-combo'])
+
+k8s_resource('d',
+  new_name='backend',
+  resource_deps=['frontend-combo'],
+  labels="backend"
+)
 
 local_resource('hello', 'sleep $(($RANDOM % 5)); echo hi;exit 0', 'foo.txt', allow_parallel=True)
 local_resource('goodbye', 'echo bye; exit 1', 'foo.txt', allow_parallel=True)
 
 # Generate a ton of resources
-for i in range(1, 300):
+for i in range(1, 90):
   resource_name = 'resource' + str(i)
   resource_yaml = read_yaml('d.yml')
   resource_yaml['metadata']['name'] = resource_name
@@ -19,12 +36,16 @@ for i in range(1, 300):
   resource_yaml['spec']['template']['metadata']['labels']['app'] = resource_name
   resource_yaml['spec']['template']['spec']['containers'][0]['name'] = resource_name
   k8s_yaml(encode_yaml(resource_yaml))
-  k8s_resource(resource_name, new_name='resource_' + str(i))
+  k8s_resource(
+    resource_name,
+    new_name='resource_' + str(i),
+    labels=["generated"]
+  )
 
 # Only enable a selection of resources
 enabled_resources=['frontend-combo', 'database', 'backend', 'hello', 'goodbye']
 
-for i in range(1, 5):
+for i in range(1, 10):
   enabled_resources.append('resource_' + str(i))
 
 config.set_enabled_resources(enabled_resources)
